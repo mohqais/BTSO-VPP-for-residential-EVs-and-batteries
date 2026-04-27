@@ -1,14 +1,5 @@
-# -*- coding: utf-8 -*-
 """
 Created on Thu Oct  3 17:19:49 2024
-
-@author: mqais
-"""
-
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Sep 23 14:54:18 2024
-
 @author: mqais
 """
 
@@ -17,18 +8,25 @@ import pandapower as pp
 import pandapower.networks as pn
 import random as rn
 import numpy as np
+# Make sure that all algorithms are in the same file location with Main.py
+from BGWO import bGWO
+from BTSO import TSO_algor
+from BDE import bde
+from bga import BGA
+from BQA import qao_binary_optimization
+from BPSO import binary_pso
+from BQIEV import quantum_inspired_evolutionary_algorithm
+from BSimuAnn import binary_simulated_annealing
 
+# firstly load the datasets
 Loads=pd.read_csv(r'Bus Loads.csv',index_col=[0])
 Q_load=pd.read_csv(r'Bus Q Loads.csv',index_col=[0])
 PV_power=pd.read_csv(r'PV data.csv',index_col=[0])
 Bat_data=pd.read_csv(r'Batteries data.csv',index_col=[0])
 EV_data=pd.read_csv(r'EV data.csv',index_col=[0])
-#Available=pd.read_csv(r'Last optim BTSO.csv',index_col=[0]).astype(float).transpose()
 Available=pd.read_csv(r'EV Available.csv',index_col=[0])
 socB_init=Bat_data.loc['soc_init']
-def normalize_array(arr):
-    norm_arr = (arr - np.min(arr)) / (np.max(arr) - np.min(arr))
-    return norm_arr
+
 def battery(Pd,soc):
      Capacity=Bat_data.loc['Capacity'].to_numpy()
      Charge_power=Bat_data.loc['Max_charge'].to_numpy()
@@ -93,16 +91,15 @@ class objective():
         if V_min>=0.94:
             obj=((1-(soc_EV))*x*self.available).sum()
         else:
-            obj=0.0001 #np.array([0.0001])
-        # obj=((1-self.socEV)*x).sum()
-        # obj=(100*obj+0.01*x.sum())*(V_min>=0.94)
+            obj=0.0001 
         obj=1/(obj)
         return obj
+#load the IEEE 33 bus system from Pandapower
 net=pn.case33bw()
 net.load.drop(net.load.index,axis=0,inplace=True)
 net.line.drop([32,33,34,35,36],axis=0,inplace=True)
 net.line['max_i_ka']=[(249-i*6)/1000 for i in range(32)]
-#net.line.in_service=True
+
 for bus in range(1,33):
     for h in range(31):
         
@@ -128,15 +125,7 @@ voltage=pd.DataFrame()
 bus_results=pd.DataFrame()
 fitness=[]
 EV_chargedNumber=pd.DataFrame()
-from Optimizers import optimizer
-from BinarySA import Binarysearch
-from BGWO import bGWO
-from LPalgorithm import LP
-from BTSO import TSO_algor
-from BDE import bde
-from bga import BGA
-# from Objective_last import objective
-#name='Without' 
+
 import time
 time_elapse=[]
 for t in range(Loads.shape[0]):
@@ -150,19 +139,32 @@ for t in range(Loads.shape[0]):
     if any(Available.iloc[t]==1) and any(soc_EV!=1):
         problem=objective(net,soc_B,soc_EV,Available.iloc[t].to_numpy(),(Available==0).sum().to_numpy(),Pd1)
         start_time = time.time()
-        # model=Binarysearch(net, soc_B, soc_EV, Available.iloc[t].to_numpy(),(Available==0).sum().to_numpy(),Pd1,EV,battery)
-        # x=model.solve()
-        # model=LP(net, soc_B, soc_EV, Available.iloc[t].to_numpy(),(Available==0).sum().to_numpy(),Pd1,EV,battery)
-        # x=model.solve()
-        # x= bde(problem.run, Available.shape[1], 10, 10, 0.9,0.7)
-        # Algo=BGA(pop_shape=(5, Available.shape[1]), method=problem.run,max_round=10,maximum=False)
-        # x,fit=Algo.run() #BGA
-        # Algo=bGWO(problem.run,Available.shape[1],20,10)
-        # Algo.opt() #GWO
-        # x,fit=Algo.gBest_X,Algo.gBest_curve
-        # x,fit_converge=optimizer(name=name, obj=problem, dim=Available.shape[1])
-        name='TSO'
-        x,fit=TSO_algor(20, Available.shape[1],10, problem.run)
+        
+        # select the required algorithm for optimization
+        algor_select='BTSO'
+        
+        if algor_select =='BTSO':
+            name='TSO'
+            x,fit=TSO_algor(20, Available.shape[1],10, problem.run)
+        elif algor_select=='BGWO':
+            Algo=bGWO(problem.run,Available.shape[1],20,10)
+            Algo.opt() #GWO
+            x,fit=Algo.gBest_X,Algo.gBest_curve
+        elif algor_select=='BGA':
+            Algo=BGA(pop_shape=(5, Available.shape[1]), method=problem.run,max_round=10,maximum=False)
+            x,fit=Algo.run() #BGA
+        elif algor_select=='BPSO':
+            Algo=binary_pso(problem.run,20,Available.shape[1],10,w=0.3,c1=1.,c2=0.5)
+            x,fit=Algo[0],Algo[1] #BPSO
+        elif algor_select=='BDE':
+            x,fit= bde(problem.run, Available.shape[1], 20, 10, 0.8,0.8)
+        elif algor_select=='BQA':
+            x, fit=qao_binary_optimization(problem.run, Available.shape[1],0.1, 10.0, 10, n_samples=20, seed=42)
+        elif algor_select=='BSA':
+            x, fit = binary_simulated_annealing(problem.run,Available.shape[1], 200, 100, 0.55)
+        elif algor_select=='BQDE':
+            x, fit =quantum_inspired_evolutionary_algorithm(problem.run, Available.shape[1],20,10,np.pi/6)
+
         fitness.append(fit)
         time_elapse.append(time.time()-start_time)
     else:
@@ -198,26 +200,7 @@ for t in range(Loads.shape[0]):
         voltage=pd.concat([voltage,net.res_bus.vm_pu],ignore_index=True,axis=1)
         angle=pd.concat([angle,net.res_bus.va_degree],ignore_index=True,axis=1)
 
-# # from openpyxl import load_workbook
-    
-# Xdata=pd.concat([load2.transpose(),qload2.transpose()],ignore_index=True,axis=1)
-# Ydata=pd.concat([voltage.transpose(),angle.transpose()],ignore_index=True,axis=1)
-# # workbook = load_workbook('Xdata.xlsx')
-# # workbook2=load_workbook('Ydata.xlsx')
-# writer1 = pd.ExcelWriter('Xdata.xlsx', engine = 'openpyxl',mode='a',if_sheet_exists='overlay')
-# writer2 = pd.ExcelWriter('Ydata.xlsx', engine = 'openpyxl',mode='a',if_sheet_exists='overlay')
-# # writer1.book=workbook
-# # writer2.book=workbook2
-# # writer1.sheets = {ws.title: ws for ws in workbook.worksheets}
-# # writer2.sheets = {ws.title: ws for ws in workbook2.worksheets}
-# row_no=874+97+97+97
-# Xdata.to_excel(writer1,index=False,header=False,startrow=row_no, startcol=0)
-# Ydata.to_excel(writer2,index=False,header=False,startrow=row_no, startcol=0)
-# writer1.close()
-# writer2.close()
-# # PV_tot_out.transpose().to_excel(writer,sheet_name='PV', index=False, header=False)   
-# # writer.close() 
-# # Demand_power.transpose().to_excel('file2.xlsx', index=False, header=False)
+#plot the results
 from results_plot import plot_results
 TimeIndex=pd.date_range(start='2017-01-01 00:00',end='2017-01-02 00:00',freq='15min')
 plot_results(loading_line,volt,grid_power,PV_tot_out,Loads.transpose(),EV_chargedNumber,

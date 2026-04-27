@@ -126,5 +126,4 @@ class BGA():
                 #print('Did not improved within {} rounds. Break.'.format(self.early_stop_rounds))
                 break
 
-        #print('\n Solution: {} \n Fitness: {} \n Evaluation times: {}'.format(global_best_ind, global_best_fitness, eva_times))
         return global_best_ind, Best_fitness

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Created on Tue Aug 27 15:33:49 2024
 
@@ -9,20 +8,7 @@ import numpy as np
 import random
 
 def binary_simulated_annealing(objective_function, num_variables, max_iter, initial_temp, cooling_rate):
-    """
-    Binary Simulated Annealing (BSA) algorithm
 
-    Parameters:
-    - objective_function: function to optimize (minimize)
-    - num_variables: number of binary variables
-    - max_iter: maximum number of iterations
-    - initial_temp: initial temperature
-    - cooling_rate: cooling rate (alpha)
-
-    Returns:
-    - best_solution: best binary solution found
-    - best_fitness: best fitness value found
-    """
     # Initialize solution and fitness
     solution = np.random.randint(2, size=num_variables)
     fitness = objective_function(solution)

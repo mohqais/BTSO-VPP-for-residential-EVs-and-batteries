@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+
 """
 Created on Wed Aug 21 16:19:31 2024
 
@@ -45,12 +45,7 @@ class bGWO():
                 score = np.array(self.fit_func(self.X[i, :]))
                 
                 if score<self.score_alpha:
-                    # # ---EvoloPy ver.---
-                    # self.score_delta = self.score_beta
-                    # self.X_delta = self.X_beta.copy()
-                    # self.score_beta = self.score_alpha
-                    # self.X_beta = self.X_alpha.copy()
-                    # # ------------------
+
                     self.score_alpha = score.copy()
                     self.X_alpha = self.X[i, :].copy()
             

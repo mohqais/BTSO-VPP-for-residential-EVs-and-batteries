@@ -2,21 +2,7 @@ import numpy as np
 import scipy.optimize as opt
 
 def qao_binary_optimization(objective_function, n_variables, beta_init=0.1, beta_final=10.0, n_steps=10, n_samples=10, seed=42):
-    """
-    Performs Quantum Annealing Optimization for a binary optimization problem.
-    
-    Parameters:
-    objective_function (function): The objective function to be minimized, taking a binary vector as input.
-    n_variables (int): The number of binary variables in the optimization problem.
-    beta_init (float): The initial inverse temperature parameter for the annealing process.
-    beta_final (float): The final inverse temperature parameter for the annealing process.
-    n_steps (int): The number of steps in the annealing process.
-    n_samples (int): The number of samples to generate and evaluate at each step.
-    seed (int): The random seed for reproducibility.
-    
-    Returns:
-    np.ndarray: The binary vector that minimizes the objective function.
-    """
+  
     np.random.seed(seed)
     best_fitness_record=[]
     # Initialize the binary vector randomly
@@ -55,15 +41,3 @@ def qao_binary_optimization(objective_function, n_variables, beta_init=0.1, beta
         best_fitness_record.append(f_best)
     
     return x_best,best_fitness_record
-
-# Example usage
-# def objective_function(x):
-#     """
-#     Example objective function: Minimize the number of ones in the binary vector.
-#     """
-#     return np.sum(x)
-
-# n_variables = 20
-# solution = qao_binary_optimization(objective_function, n_variables)
-# print("Optimal solution:", solution)
-# print("Objective function value:", objective_function(solution))

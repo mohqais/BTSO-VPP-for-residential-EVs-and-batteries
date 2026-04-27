@@ -37,15 +37,3 @@ def quantum_inspired_evolutionary_algorithm(objective_function, n_variables, pop
         best_fitness_record.append(best_fitness)
     
     return best_individual,best_fitness_record
-
-# Example usage
-# def objective_function(x):
-#     """
-#     Example objective function: Minimize the number of ones in the binary vector.
-#     """
-#     return np.sum(x)
-
-# n_variables = 20
-# solution = quantum_inspired_evolutionary_algorithm(objective_function, n_variables)
-# print("Optimal solution:", solution)
-# print("Objective function value:", objective_function(solution))
